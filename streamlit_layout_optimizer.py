@@ -1,6 +1,3 @@
-import rectpack, streamlit as st
-
-st.write("Rectpack version:", rectpack.__version__)
 import streamlit as st
 from fractions import Fraction
 import re
