@@ -1,3 +1,6 @@
+import rectpack, streamlit as st
+
+st.write("Rectpack version:", rectpack.__version__)
 import streamlit as st
 from fractions import Fraction
 import re
@@ -42,7 +45,7 @@ def parse_cut_list(cut_list_text: str):
     return pieces
 
 # --- Packing logic ---
-from rectpack import newPacker, MaxRectsBssf
+from rectpack import newPacker, GuillotineBaf
 
 def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction):
     scale = 100
@@ -51,10 +54,10 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     bin_width = scale_up(sheet_width)
     bin_height = scale_up(sheet_length)
 
-    packer = newPacker(
-        bin_algo=MaxRectsBssf,
-        rotation=True,
-    )
+        packer = newPacker(
+            bin_algo=GuillotineBaf,
+            rotation=True,
+        )
 
     for _ in range(100):
         packer.add_bin(bin_width, bin_height)
