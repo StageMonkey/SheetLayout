@@ -1,4 +1,4 @@
 streamlit
-rectpack
+rectpack==0.2.2
 matplotlib
 pandas
