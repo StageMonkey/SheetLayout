@@ -54,10 +54,10 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     bin_width = scale_up(sheet_width)
     bin_height = scale_up(sheet_length)
 
-        packer = newPacker(
-            bin_algo=GuillotineBaf,
-            rotation=True,
-        )
+    packer = newPacker(
+        bin_algo=GuillotineBaf,
+        rotation=True,
+    )
 
     for _ in range(100):
         packer.add_bin(bin_width, bin_height)
