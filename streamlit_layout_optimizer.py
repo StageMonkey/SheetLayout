@@ -43,17 +43,15 @@ def parse_cut_list(cut_list_text: str):
 
 # --- Packing logic ---
 def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction):
+    from rectpack import newPacker, MaxRectsBssf, PackingBinGlobal
     scale = 100
     def scale_up(v): return int(round(v * scale))
 
     bin_width = scale_up(sheet_width)
     bin_height = scale_up(sheet_length)
-    kerf_px = scale_up(kerf)
 
     packer = newPacker(
-        mode=PackingMode.Offline,
-        bin_algo=MaxRectsBssf,
-        sort_algo=SORT_AREA,
+        bin_algo=PackingBinGlobal,
         rotation=True,
     )
 
