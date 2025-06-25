@@ -3,7 +3,7 @@ from fractions import Fraction
 import re
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from rectpack import newPacker, PackingMode, MaxRectsBssf, SORT_AREA
+from rectpack import newPacker
 import pandas as pd
 import io
 
@@ -42,9 +42,6 @@ def parse_cut_list(cut_list_text: str):
     return pieces
 
 # --- Packing logic ---
-
-from rectpack import newPacker
-
 def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction):
     scale = 100
     def scale_up(v): return int(round(v * scale))
@@ -52,7 +49,7 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     bin_width = scale_up(sheet_width)
     bin_height = scale_up(sheet_length)
 
-    packer = newPacker(rotation=True)  # Global rotation enabled
+    packer = newPacker(rotation=True)
     for _ in range(100):
         packer.add_bin(bin_width, bin_height)
 
@@ -61,92 +58,85 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
         h = scale_up(cut['length'] + kerf)
         grain = cut.get('grain')
 
-        # Handle grain constraint by pre-rotating dimensions if rotation not allowed
-        if grain == "L" and cut['length'] > cut['width']:
-            # Grain along long side = OK, no change
-            pass
-        elif grain == "L" and cut['width'] > cut['length']:
-            # Flip to force grain alignment
+        if grain == "L" and cut['width'] > cut['length']:
             w, h = h, w
-        elif grain == "W" and cut['width'] > cut['length']:
-            pass  # OK
         elif grain == "W" and cut['length'] > cut['width']:
             w, h = h, w
-        # else: no grain preference, allow rotation freely
 
-        packer.add_rect(w, h, rid=i)  # ✅ NO 'rot=' keyword
+        packer.add_rect(w, h, rid=i)
 
     packer.pack()
     return packer
+
 # --- Visualization ---
-for i, abin in enumerate(packer):
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.set_title(f"Sheet {i + 1}")
-    ax.set_xlim(0, sheet_width)
-    ax.set_ylim(0, sheet_length)
-    ax.set_aspect('equal')
-    ax.invert_yaxis()
+def draw_layout(packer, cuts, sheet_length, sheet_width, kerf):
+    for i, abin in enumerate(packer):
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.set_title(f"Sheet {i + 1}")
+        ax.set_xlim(0, sheet_width)
+        ax.set_ylim(0, sheet_length)
+        ax.set_aspect('equal')
+        ax.invert_yaxis()
 
-    ax.add_patch(patches.Rectangle((0, 0), sheet_width, sheet_length,
-                                   linewidth=1, edgecolor='black', facecolor='none'))
+        ax.add_patch(patches.Rectangle((0, 0), sheet_width, sheet_length, linewidth=1, edgecolor='black', facecolor='none'))
 
-    for rect in abin:
-        x = rect.x
-        y = rect.y
-        w = rect.width
-        h = rect.height
-        rid = rect.rid
-        rotated = rect.rot
+        for rect in abin:
+            x = rect.x
+            y = rect.y
+            w = rect.width
+            h = rect.height
+            rid = rect.rid
+            rotated = rect.rot
 
-        cut = cuts[rid]
+            cut = cuts[rid]
 
-        disp_w = (w / 100) - kerf
-        disp_h = (h / 100) - kerf
-        disp_x = x / 100
-        disp_y = y / 100
+            disp_w = (w / 100) - kerf
+            disp_h = (h / 100) - kerf
+            disp_x = x / 100
+            disp_y = y / 100
 
-        color = "#d3e5ff" if not rotated else "#ffa07a"
+            color = "#d3e5ff" if not rotated else "#ffa07a"
 
-        ax.add_patch(patches.Rectangle(
-            (disp_x, disp_y), disp_w, disp_h,
-            edgecolor='black', facecolor=color, linewidth=1.5
-        ))
+            ax.add_patch(patches.Rectangle(
+                (disp_x, disp_y), disp_w, disp_h,
+                edgecolor='black', facecolor=color, linewidth=1.5
+            ))
 
-        label = f"{disp_w:.2f}\" x {disp_h:.2f}\""
-        if cut.get("grain"):
-            label += f" ({cut['grain']})"
-        ax.text(disp_x + 0.2, disp_y + 0.2, label, fontsize=8, verticalalignment='top')
+            label = f"{disp_w:.2f}\" x {disp_h:.2f}\""
+            if cut.get("grain"):
+                label += f" ({cut['grain']})"
+            ax.text(disp_x + 0.2, disp_y + 0.2, label, fontsize=8, verticalalignment='top')
 
-    st.pyplot(fig)
+        st.pyplot(fig)
 
 # --- CSV Export ---
 def generate_layout_summary(packer, cuts, kerf):
-    scale = 100
-    def scale_down(v): return round(v / scale, 4)
-
     rows = []
     for sheet_num, abin in enumerate(packer):
         for rect in abin:
-            x, y, w, h, rid = rect[:5]
-            rotated = rect[5] if len(rect) > 5 else False
+            x = rect.x
+            y = rect.y
+            w = rect.width
+            h = rect.height
+            rid = rect.rid
+            rotated = rect.rot
+
             cut = cuts[rid]
 
-            width = scale_down(w) - kerf
-            height = scale_down(h) - kerf
+            width = round((w / 100) - kerf, 4)
+            height = round((h / 100) - kerf, 4)
 
-            row = {
+            rows.append({
                 "Sheet": sheet_num + 1,
-                "X (in)": scale_down(x),
-                "Y (in)": scale_down(y),
+                "X (in)": round(x / 100, 4),
+                "Y (in)": round(y / 100, 4),
                 "Width (in)": width,
                 "Height (in)": height,
                 "Rotated": rotated,
                 "Grain Pref": cut.get("grain") or "Any"
-            }
-            rows.append(row)
+            })
 
-    df = pd.DataFrame(rows)
-    return df
+    return pd.DataFrame(rows)
 
 # --- Streamlit UI ---
 st.title("📐 Plywood Layout Optimizer")
@@ -165,9 +155,11 @@ if st.button("Optimize Layout"):
         sheet_W = parse_fractional_inches(sheet_width)
         kerf_val = parse_fractional_inches(kerf)
         cuts = parse_cut_list(cut_list_input)
+
         packer = run_layout_optimizer(cuts, sheet_L, sheet_W, kerf_val, grain_direction)
 
-        st.success(f"✅ Used {len(packer)} sheet(s)")
+        st.success(f"✅ Used {len(list(packer))} sheet(s)")
+
         draw_layout(packer, cuts, sheet_L, sheet_W, kerf_val)
 
         df = generate_layout_summary(packer, cuts, kerf_val)
