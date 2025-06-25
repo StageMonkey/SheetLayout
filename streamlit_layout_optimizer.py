@@ -79,44 +79,45 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     packer.pack()
     return packer
 # --- Visualization ---
-def draw_layout(packer, cuts, sheet_length, sheet_width, kerf):
-    scale = 100
-    def scale_down(v): return v / scale
+for i, abin in enumerate(packer):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_title(f"Sheet {i + 1}")
+    ax.set_xlim(0, sheet_width)
+    ax.set_ylim(0, sheet_length)
+    ax.set_aspect('equal')
+    ax.invert_yaxis()
 
-    for i, abin in enumerate(packer):
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.set_title(f"Sheet {i + 1}")
-        ax.set_xlim(0, sheet_width)
-        ax.set_ylim(0, sheet_length)
-        ax.set_aspect('equal')
-        ax.invert_yaxis()
+    ax.add_patch(patches.Rectangle((0, 0), sheet_width, sheet_length,
+                                   linewidth=1, edgecolor='black', facecolor='none'))
 
-        ax.add_patch(patches.Rectangle((0, 0), sheet_width, sheet_length, linewidth=1, edgecolor='black', facecolor='none'))
+    for rect in abin:
+        x = rect.x
+        y = rect.y
+        w = rect.width
+        h = rect.height
+        rid = rect.rid
+        rotated = rect.rot
 
-        for rect in abin:
-            x, y, w, h, rid = rect[:5]
-            rotated = rect[5] if len(rect) > 5 else False
-            cut = cuts[rid]
+        cut = cuts[rid]
 
-            disp_w = scale_down(w) - kerf
-            disp_h = scale_down(h) - kerf
-            disp_x = scale_down(x)
-            disp_y = scale_down(y)
+        disp_w = (w / 100) - kerf
+        disp_h = (h / 100) - kerf
+        disp_x = x / 100
+        disp_y = y / 100
 
-            color = "#d3e5ff" if not rotated else "#ffa07a"
+        color = "#d3e5ff" if not rotated else "#ffa07a"
 
-            rect_patch = patches.Rectangle(
-                (disp_x, disp_y), disp_w, disp_h,
-                edgecolor='black', facecolor=color, linewidth=1.5
-            )
-            ax.add_patch(rect_patch)
+        ax.add_patch(patches.Rectangle(
+            (disp_x, disp_y), disp_w, disp_h,
+            edgecolor='black', facecolor=color, linewidth=1.5
+        ))
 
-            label = f"{disp_w:.2f}\" x {disp_h:.2f}\""
-            if cut.get("grain"):
-                label += f" ({cut['grain']})"
-            ax.text(disp_x + 0.2, disp_y + 0.2, label, fontsize=8, verticalalignment='top')
+        label = f"{disp_w:.2f}\" x {disp_h:.2f}\""
+        if cut.get("grain"):
+            label += f" ({cut['grain']})"
+        ax.text(disp_x + 0.2, disp_y + 0.2, label, fontsize=8, verticalalignment='top')
 
-        st.pyplot(fig)
+    st.pyplot(fig)
 
 # --- CSV Export ---
 def generate_layout_summary(packer, cuts, kerf):
