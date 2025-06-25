@@ -42,8 +42,9 @@ def parse_cut_list(cut_list_text: str):
     return pieces
 
 # --- Packing logic ---
+from rectpack import newPacker, MaxRectsBssf
+
 def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction):
-    from rectpack import newPacker, MaxRectsBssf, PackingBinGlobal
     scale = 100
     def scale_up(v): return int(round(v * scale))
 
@@ -51,7 +52,7 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     bin_height = scale_up(sheet_length)
 
     packer = newPacker(
-        bin_algo=PackingBinGlobal,
+        bin_algo=MaxRectsBssf,
         rotation=True,
     )
 
@@ -76,7 +77,6 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
 
     packer.pack()
     return packer
-
 # --- Visualization ---
 def draw_layout(packer, cuts, sheet_length, sheet_width, kerf):
     scale = 100
