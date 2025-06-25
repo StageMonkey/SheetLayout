@@ -52,27 +52,29 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     bin_width = scale_up(sheet_width)
     bin_height = scale_up(sheet_length)
 
-    # ✅ No bin_algo specified — uses default
-    packer = newPacker(rotation=True)
-
+    packer = newPacker(rotation=True)  # Global rotation enabled
     for _ in range(100):
         packer.add_bin(bin_width, bin_height)
 
     for i, cut in enumerate(cuts):
         w = scale_up(cut['width'] + kerf)
         h = scale_up(cut['length'] + kerf)
-
         grain = cut.get('grain')
-        allow_rotation = False
 
-        if not grain:
-            allow_rotation = True
-        elif grain == "L":
-            allow_rotation = cut['length'] < cut['width']
-        elif grain == "W":
-            allow_rotation = cut['length'] > cut['width']
+        # Handle grain constraint by pre-rotating dimensions if rotation not allowed
+        if grain == "L" and cut['length'] > cut['width']:
+            # Grain along long side = OK, no change
+            pass
+        elif grain == "L" and cut['width'] > cut['length']:
+            # Flip to force grain alignment
+            w, h = h, w
+        elif grain == "W" and cut['width'] > cut['length']:
+            pass  # OK
+        elif grain == "W" and cut['length'] > cut['width']:
+            w, h = h, w
+        # else: no grain preference, allow rotation freely
 
-        packer.add_rect(w, h, rid=i, rot=allow_rotation)
+        packer.add_rect(w, h, rid=i)  # ✅ NO 'rot=' keyword
 
     packer.pack()
     return packer
