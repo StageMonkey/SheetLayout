@@ -43,6 +43,8 @@ def parse_cut_list(cut_list_text: str):
 
 # --- Packing logic ---
 
+from rectpack import newPacker
+
 def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction):
     scale = 100
     def scale_up(v): return int(round(v * scale))
@@ -50,12 +52,8 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     bin_width = scale_up(sheet_width)
     bin_height = scale_up(sheet_length)
 
-    from rectpack import newPacker, GuillotineBaf
-    
-    packer = newPacker(
-        bin_algo=GuillotineBaf,
-        rotation=True,
-    )
+    # ✅ No bin_algo specified — uses default
+    packer = newPacker(rotation=True)
 
     for _ in range(100):
         packer.add_bin(bin_width, bin_height)
