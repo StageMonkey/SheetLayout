@@ -51,8 +51,10 @@ def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction)
     bin_width = scale_up(sheet_width)
     bin_height = scale_up(sheet_length)
 
+    from rectpack import newPacker, MaxRectsBssf
+
     packer = newPacker(
-        bin_algo=GuillotineBaf,
+        bin_algo=MaxRectsBssf,
         rotation=True,
     )
 
