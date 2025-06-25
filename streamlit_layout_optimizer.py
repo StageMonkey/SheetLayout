@@ -83,7 +83,7 @@ def draw_layout(packer, cuts, sheet_length, sheet_width, kerf):
     scale = 100
     def scale_down(v): return v / scale
 
-    for i, abin in enumerate(packer.bin_rects()):
+    for i, abin in enumerate(packer):
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.set_title(f"Sheet {i + 1}")
         ax.set_xlim(0, sheet_width)
@@ -124,7 +124,7 @@ def generate_layout_summary(packer, cuts, kerf):
     def scale_down(v): return round(v / scale, 4)
 
     rows = []
-    for sheet_num, abin in enumerate(packer.bin_rects()):
+    for sheet_num, abin in enumerate(packer):
         for rect in abin:
             x, y, w, h, rid = rect[:5]
             rotated = rect[5] if len(rect) > 5 else False
