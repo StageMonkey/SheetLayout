@@ -42,7 +42,6 @@ def parse_cut_list(cut_list_text: str):
     return pieces
 
 # --- Packing logic ---
-from rectpack import newPacker, GuillotineBaf
 
 def run_layout_optimizer(cuts, sheet_length, sheet_width, kerf, grain_direction):
     scale = 100
