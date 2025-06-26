@@ -78,7 +78,8 @@ def draw_layout(packer, cuts, sheet_length, sheet_width, kerf):
         ax.set_aspect('equal')
         ax.invert_yaxis()
 
-        ax.add_patch(patches.Rectangle((0, 0), sheet_width, sheet_length, linewidth=1, edgecolor='black', facecolor='none'))
+        ax.add_patch(patches.Rectangle((0, 0), sheet_width, sheet_length,
+                                       linewidth=1, edgecolor='black', facecolor='none'))
 
         for rect in abin:
             x = rect.x
@@ -86,14 +87,22 @@ def draw_layout(packer, cuts, sheet_length, sheet_width, kerf):
             w = rect.width
             h = rect.height
             rid = rect.rid
-            rotated = rect.rot
 
             cut = cuts[rid]
 
+            # Convert back to inches
             disp_w = (w / 100) - kerf
             disp_h = (h / 100) - kerf
             disp_x = x / 100
             disp_y = y / 100
+
+            # Infer rotation
+            original_w = cut['width']
+            original_h = cut['length']
+            rotated = not (
+                abs(disp_w - original_w) < 0.01 and
+                abs(disp_h - original_h) < 0.01
+            )
 
             color = "#d3e5ff" if not rotated else "#ffa07a"
 
@@ -119,12 +128,17 @@ def generate_layout_summary(packer, cuts, kerf):
             w = rect.width
             h = rect.height
             rid = rect.rid
-            rotated = rect.rot
 
             cut = cuts[rid]
 
             width = round((w / 100) - kerf, 4)
             height = round((h / 100) - kerf, 4)
+
+            # Determine if rotation occurred
+            rotated = not (
+                abs(width - cut['width']) < 0.01 and
+                abs(height - cut['length']) < 0.01
+            )
 
             rows.append({
                 "Sheet": sheet_num + 1,
