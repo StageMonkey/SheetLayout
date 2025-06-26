@@ -8,6 +8,9 @@ import pandas as pd
 import io
 
 # --- Parsing helpers ---
+def rounded(value):
+    return round(value + 1e-6, 2)  # Avoid .99 issues
+    
 def parse_fractional_inches(value: str) -> float:
     value = value.strip()
     if ' ' in value:
@@ -16,7 +19,7 @@ def parse_fractional_inches(value: str) -> float:
     elif '/' in value:
         return float(Fraction(value))
     else:
-        return float(value)
+        return float(value)  # Accepts decimals like 12.5
 
 def parse_cut_line(line: str):
     pattern = r'([0-9\/\s]+)\s*[xX]\s*([0-9\/\s]+)(?:\s+([LW]))?'
@@ -91,8 +94,8 @@ def draw_layout(packer, cuts, sheet_length, sheet_width, kerf):
             cut = cuts[rid]
 
             # Convert back to inches
-            disp_w = (w / 100) - kerf
-            disp_h = (h / 100) - kerf
+            disp_w = rounded((w / 100) - kerf)
+            disp_h = rounded((h / 100) - kerf)
             disp_x = x / 100
             disp_y = y / 100
 
@@ -131,8 +134,8 @@ def generate_layout_summary(packer, cuts, kerf):
 
             cut = cuts[rid]
 
-            width = round((w / 100) - kerf, 4)
-            height = round((h / 100) - kerf, 4)
+            disp_w = rounded((w / 100) - kerf)
+            disp_h = rounded((h / 100) - kerf)
 
             # Determine if rotation occurred
             rotated = not (
