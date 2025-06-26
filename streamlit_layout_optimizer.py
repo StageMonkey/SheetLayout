@@ -22,15 +22,18 @@ def parse_fractional_inches(value: str) -> float:
         return float(value)  # Accepts decimals like 12.5
 
 def parse_cut_line(line: str):
-    pattern = r'([0-9\/\s]+)\s*[xX]\s*([0-9\/\s]+)(?:\s+([LW]))?'
+    pattern = r'(?:([\d]+)\s*@\s*)?([0-9\/\.\s]+)\s*[xX]\s*([0-9\/\.\s]+)(?:\s+([LW]))?'
     match = re.match(pattern, line.strip())
     if not match:
         raise ValueError(f"Invalid format: '{line}'")
-    raw_length, raw_width, grain = match.groups()
+    
+    qty_str, raw_length, raw_width, grain = match.groups()
+    quantity = int(qty_str) if qty_str else 1
     length = parse_fractional_inches(raw_length)
     width = parse_fractional_inches(raw_width)
     grain = grain.upper() if grain else None
-    return {"length": length, "width": width, "grain": grain}
+    
+    return {"length": length, "width": width, "grain": grain, "quantity": quantity}
 
 def parse_cut_list(cut_list_text: str):
     lines = cut_list_text.strip().split('\n')
@@ -39,7 +42,8 @@ def parse_cut_list(cut_list_text: str):
         if line.strip():
             try:
                 piece = parse_cut_line(line)
-                pieces.append(piece)
+                for _ in range(piece.get("quantity", 1)):
+                    pieces.append({k: piece[k] for k in ["length", "width", "grain"]})
             except ValueError as e:
                 st.warning(f"Skipping line: {e}")
     return pieces
