@@ -147,6 +147,12 @@ def generate_layout_summary(packer, cuts, kerf):
                 abs(height - cut['length']) < 0.01
             )
 
+            width = round((w / 100) - kerf, 4)
+            height = round((h / 100) - kerf, 4)
+            rotated = not (
+                abs(width - cut['width']) < 0.01 and
+                abs(height - cut['length']) < 0.01
+            )
             rows.append({
                 "Sheet": sheet_num + 1,
                 "X (in)": round(x / 100, 4),
